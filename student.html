@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLingual - Student Panel</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+        .student-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 400px;
+        }
+        select, textarea, button, input {
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            text-align: left;
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .logout-btn {
+            margin-top: 20px;
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="student-container">
+        <h2>Student Panel</h2>
+        <select id="action-select">
+            <option value="" disabled selected>--Select--</option>
+            <option value="query">Query</option>
+        </select>
+        
+        <div id="action-container">
+            <!-- Dynamic Content Will Be Loaded Here -->
+        </div>
+        <pre id="query-result"></pre>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+    function logout() {
+        fetch("/logout", { method: "GET" })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "/login";
+                }
+            });
+    }
+
+    document.getElementById("action-select").addEventListener("change", function () {
+        const actionContainer = document.getElementById("action-container");
+        const selectedAction = this.value;
+
+        let content = "";
+        if (selectedAction === "query") {
+            content = `
+                <h3>Query</h3>
+                <form id="query-form">
+                    <textarea id="query-input" placeholder="Enter your query in English..."></textarea>
+                    <button type="submit">Run Query</button>
+                </form>
+                <pre id="query-results"></pre>
+            `;
+        }
+
+        actionContainer.innerHTML = content;
+
+        if (selectedAction === "query") {
+            document.getElementById("query-form").addEventListener("submit", async function (event) {
+                event.preventDefault();
+
+                let queryInput = document.getElementById("query-input").value;
+
+                let response = await fetch("/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: queryInput })
+                });
+
+                let result = await response.json();
+
+                if (!result.success) {
+                    alert("Unauthorized query or error occurred!");
+                } else if (result.results.length === 0) {
+                    alert("No results found.");
+                } else {
+                    document.getElementById("query-results").innerText = JSON.stringify(result.results, null, 2);
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

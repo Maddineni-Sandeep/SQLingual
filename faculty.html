@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .logout-btn {
+            background: #dc3545;
+            margin-top: 15px;
+        }
+        .logout-btn:hover {
+            background: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Faculty Panel</h2>
+
+        <!-- Action Selection Dropdown -->
+        <select id="action-select">
+            <option value="">--Select--</option>
+            <option value="add-marks">Add Marks</option>
+            <option value="run-query">Run Query</option>
+        </select>
+
+        <!-- Add Marks Form -->
+        <div id="add-marks-section" class="hidden">
+            <h3>Add Marks</h3>
+            <form id="add-marks-form">
+                <input type="number" id="student-id" placeholder="Student ID" required>
+                <input type="text" id="course-id" placeholder="Course ID" required>
+                <input type="number" id="marks-obtained" placeholder="Marks Obtained" min=0 max=100 required>
+                <button type="submit">Submit Marks</button>
+            </form>
+        </div>
+
+        <!-- Query Form -->
+        <div id="query-section" class="hidden">
+            <h3>Run Query</h3>
+            <form id="query-form">
+                <textarea id="query-input" placeholder="Enter query in English" required></textarea>
+                <button type="submit">Run Query</button>
+            </form>
+            <h3>Results</h3>
+            <pre id="query-results"></pre>
+        </div>
+
+        <!-- Logout Button -->
+        <button id="logout-btn" class="logout-btn"  onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        // Show/hide forms based on dropdown selection
+        document.getElementById("action-select").addEventListener("change", function() {
+            let selectedAction = this.value;
+            document.getElementById("add-marks-section").classList.add("hidden");
+            document.getElementById("query-section").classList.add("hidden");
+
+            if (selectedAction === "add-marks") {
+                document.getElementById("add-marks-section").classList.remove("hidden");
+            } else if (selectedAction === "run-query") {
+                document.getElementById("query-section").classList.remove("hidden");
+            }
+        });
+
+        // Handle Add Marks Submission
+        document.getElementById("add-marks-form").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            let data = {
+    		"student-id": document.getElementById("student-id").value,
+    		"course-id": document.getElementById("course-id").value,
+    		"marks": document.getElementById("marks-obtained").value
+	    };
+
+
+            let response = await fetch("/add-marks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            let result = await response.json();
+            alert(result.message);
+        });
+
+        // Handle Query Submission
+        document.getElementById("query-form").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            let response = await fetch("/query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: document.getElementById("query-input").value })
+            });
+
+            let result = await response.json();
+
+            if (!result.success) {
+                alert("Unauthorized query or error occurred!");
+            } else if (result.results.length === 0) {
+                alert("No results found.");
+            } else {
+                document.getElementById("query-results").innerText = JSON.stringify(result.results, null, 2);
+            }
+        });
+
+        // Handle Logout
+        function logout() {
+        fetch("/logout", { method: "GET" })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "/login";
+                }
+            });
+    }
+    </script>
+
+</body>
+</html>
